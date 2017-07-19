@@ -9,11 +9,11 @@ Push-Location (Split-Path ($MyInvocation.MyCommand.Path))
 # Global variables
 #
 # User properties
-$ou = "OU=1MUsers,DC=VQ,DC=Local" # Which OU to create the user in
+$ou = "OU=1MUsers,DC=AC,DC=Local" # Which OU to create the user in
 $initialPassword = "Password1"             # Initial password set for the user
 $orgShortName = "AC"                         # This is used to build a user's sAMAccountName
-$dnsDomain = "vq.local"                      # Domain is used for e-mail address and UPN
-$company = "VQ Comms"                      # Used for the user object's company attribute
+$dnsDomain = "AC.local"                      # Domain is used for e-mail address and UPN
+$company = "AC Co"                      # Used for the user object's company attribute
 $departments = (                             # Departments and associated job titles to assign to the users
                   @{"Name" = "Finance & Accounting"; Positions = ("Manager", "Accountant", "Data Entry")},
                   @{"Name" = "Human Resources"; Positions = ("Manager", "Administrator", "Officer", "Coordinator")},
