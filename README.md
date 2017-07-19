@@ -7,21 +7,21 @@ When you need to simulate a real Active Directory with thousands of users you qu
 
 The purpose of the script is to create an arbitrary number of user accounts with the following properties:
 
-Logon name (sAMAccountName)
-User principal name (UPN)
-First name
-Last name
-Display name
-E-mail address
-Street
-City
-Postal code
-State
-Country
-Phone number
-Company
-Department
-Title
+* Logon name (sAMAccountName)
+* User principal name (UPN)
+* First name
+* Last name 
+* Display name
+* E-mail address
+* Street
+* City
+* Postal code
+* State
+* Country
+* Phone number
+* Company
+* Department
+* Title
 
 
 Active directory user accounts created by the PowerShell script
