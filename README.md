@@ -32,7 +32,7 @@ In order to create realistic results we need data, lists: firstnames, surnames, 
 
 If you want your users to “live” in another country you need to provide the lists yourself.
 
-Using CreateDemoUsers.ps1
+# Using CreateDemoUsers.ps1
 
 Running the script is simple enough: just start it, there are no commandline parameters. I have run it directly on my lab’s domain controller but it should work from a domain member, too.
 
