@@ -10,7 +10,6 @@
 
 # Known issues
 # Usercount (For me anyway) seems to be inaccurate when import completes. May be related to errorcheck compensation when usercount is reduced. Consistently seem to get many more users that intended.
-# Addresses have been reduced due to alot of them not working. This can be increased if you need more 'office' locations.
 
 
 Set-StrictMode -Version 2
@@ -24,11 +23,11 @@ Push-Location (Split-Path ($MyInvocation.MyCommand.Path))
 # Global variables
 #
 # User properties
-$ou = "OU=1MUsers,DC=AC,DC=Local" # Which OU to create the user in
-$initialPassword = "Password1"             # Initial password set for the user
+$ou = "OU=YourOUHere,DC=AC,DC=Local"         # Which OU to create the user in
+$initialPassword = "Password1"               # Initial password set for the user
 $orgShortName = "AC"                         # This is used to build a user's sAMAccountName
 $dnsDomain = "AC.local"                      # Domain is used for e-mail address and UPN
-$company = "AC co"                      # Used for the user object's company attribute
+$company = "AC co"                           # Used for the user object's company attribute
 $departments = (                             # Departments and associated job titles to assign to the users
                   @{"Name" = "Finance & Accounting"; Positions = ("Manager", "Accountant", "Data Entry")},
                   @{"Name" = "Human Resources"; Positions = ("Manager", "Administrator", "Officer", "Coordinator")},
@@ -44,11 +43,11 @@ $departments = (                             # Departments and associated job ti
 $phoneCountryCodes = @{"GB" = "+44"}         # Country codes for the countries used in the address file
 
 # Other parameters
-$userCount = 1000                         # How many users to create
+$userCount = 1000                           # How many users to create
 $locationCount = 1                          # How many different offices locations to use
 
 # Files used
-$firstNameFile = "Firstnames.txt"        # Format: FirstName
+$firstNameFile = "Firstnames.txt"            # Format: FirstName
 $lastNameFile = "Lastnames.txt"              # Format: LastName
 $addressFile = "Addresses.txt"               # Format: City,Street,State,PostalCode,Country
 $postalAreaFile = "PostalAreaCode.txt"       # Format: PostalCode,PhoneAreaCode
@@ -153,9 +152,16 @@ for ($i = 0; $i -lt $userCount; $i++) {
    {   
       $i=$i-1
       if ($i -lt 0)
-      {$i=0   
-      continue
-   }
+        {$i=0   
+        continue
+        }
+     $employeeNumber=$employeeNumber-1
+     if ($employeeNumber -lt 0)
+        {$employeeNumber=0   
+        continue
+        }
+
+    }
    }
    
 
@@ -166,7 +172,11 @@ for ($i = 0; $i -lt $userCount; $i++) {
    
    "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $street, $city"
    $i=$i+1
-   if ($i -ge $userCount) {exit}
+   if ($i -ge $userCount) 
+   {
+       "Script Complete. Exiting"
+       exit
+   }
 }
 }
 }
