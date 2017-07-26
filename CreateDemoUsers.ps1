@@ -179,4 +179,3 @@ for ($i = 0; $i -lt $userCount; $i++) {
    }
 }
 }
-}
