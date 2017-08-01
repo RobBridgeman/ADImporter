@@ -158,7 +158,6 @@ if ($i -lt $userCount)
    #
    # Create the user account
    #
-   sleep 2
    New-ADUser -SamAccountName $sAMAccountName -Name $displayName -Path $ou -AccountPassword $securePassword -Enabled $true -GivenName $firstName -Surname $lastName -DisplayName $displayName -EmailAddress "$firstName.$lastName@$dnsDomain" -StreetAddress $street -City $city -PostalCode $postalCode -State $state -Country $country -UserPrincipalName "$sAMAccountName@$dnsDomain" -Company $company -Department $department -EmployeeNumber $employeeNumber -Title $title -OfficePhone $officePhone
 
    "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $street, $city"
