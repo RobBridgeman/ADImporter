@@ -43,7 +43,7 @@ $departments = (                             # Departments and associated job ti
 $phoneCountryCodes = @{"GB" = "+44"}         # Country codes for the countries used in the address file
 
 # Other parameters
-$userCount = 1000                           # How many users to create
+$userCount = 10000                           # How many users to create
 $locationCount = 1                          # How many different offices locations to use
 
 # Files used
@@ -97,23 +97,25 @@ for ($i = 0; $i -le $locationCount; $i++)
    $addressIndexesUsed += $addressIndex
 }
 
+
 #
 # Create the users
 #
 
-   #
-   # Determine this user's properties
-   #
+#
+# Randomly determine this user's properties
+#
    
-   # Sex & name
+# Sex & name
 $i = 0
-for ($i = 0; $i -lt $userCount; $i++) {
+if ($i -lt $userCount) 
+{
     foreach ($firstname in $firstNames)
 {
     foreach ($lastname in $lastnames)
     {
     $displayName = $firstname.Firstname + " " + $lastname.Lastname
-    
+
    # Address
    $locationIndex = Get-Random -Minimum 0 -Maximum $locations.Count
    $street = $locations[$locationIndex].Street
@@ -141,41 +143,32 @@ for ($i = 0; $i -lt $userCount; $i++) {
    $officePhone = $phoneCountryCodes[$country] + "-" + $postalAreaCodes[$postalCode].Substring(1) + "-" + (Get-Random -Minimum 100000 -Maximum 1000000)
    
    # Build the sAMAccountName: $orgShortName + employee number
-
-   $employeeNumber = $employeeNumber+1
    $sAMAccountName = $orgShortName + $employeeNumber
-   
    $userExists = $false
    Try   { $userExists = Get-ADUser -LDAPFilter "(sAMAccountName=$sAMAccountName)" }
    Catch { }
    if ($userExists)
-   {   
+   {
       $i=$i-1
       if ($i -lt 0)
-        {$i=0   
-        continue
-        }
-     $employeeNumber=$employeeNumber-1
-     if ($employeeNumber -lt 0)
-        {$employeeNumber=0   
-        continue
-        }
-
-    }
+      {$i=0}
+      continue
    }
-   
 
    #
    # Create the user account
    #
-   New-ADUser -SamAccountName $sAMAccountName -Name $displayName -Path $ou -AccountPassword $securePassword -Enabled $true -GivenName $firstName.Firstname -Surname $lastName.Lastname -DisplayName $displayName -EmailAddress "$firstName.$lastName@$dnsDomain" -StreetAddress $street -City $city -PostalCode $postalCode -State $state -Country $country -UserPrincipalName "$sAMAccountName@$dnsDomain" -Company $company -Department $department -EmployeeNumber $employeeNumber -Title $title -OfficePhone $officePhone
-   
+   sleep 2
+   New-ADUser -SamAccountName $sAMAccountName -Name $displayName -Path $ou -AccountPassword $securePassword -Enabled $true -GivenName $firstName -Surname $lastName -DisplayName $displayName -EmailAddress "$firstName.$lastName@$dnsDomain" -StreetAddress $street -City $city -PostalCode $postalCode -State $state -Country $country -UserPrincipalName "$sAMAccountName@$dnsDomain" -Company $company -Department $department -EmployeeNumber $employeeNumber -Title $title -OfficePhone $officePhone
+
    "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $street, $city"
-   $i=$i+1
+   $i = $i+1
+   $employeeNumber = $employeeNumber+1
+}
+}
+}
    if ($i -ge $userCount) 
    {
        "Script Complete. Exiting"
        exit
    }
-}
-}
