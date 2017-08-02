@@ -43,7 +43,7 @@ $departments = (                             # Departments and associated job ti
 $phoneCountryCodes = @{"GB" = "+44"}         # Country codes for the countries used in the address file
 
 # Other parameters
-$userCount = 10000                           # How many users to create
+$userCount = 5000                           # How many users to create
 $locationCount = 1                          # How many different offices locations to use
 
 # Files used
@@ -163,11 +163,12 @@ if ($i -lt $userCount)
    "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $street, $city"
    $i = $i+1
    $employeeNumber = $employeeNumber+1
-}
-}
-}
-   if ($i -ge $userCount) 
+
+      if ($i -ge $userCount) 
    {
        "Script Complete. Exiting"
        exit
    }
+}
+}
+}
