@@ -5,7 +5,6 @@
 # Reduced Male and Female names into one list for ease of expansion
 # Changed Displayname code to create each combination of names possible
 # Changed sAMAccountname generation to add unique account ID with orgShortName as suffix.
-# Added line to reduce user created count by 1 when a failure is hit to reduce chances of getting too few users.
 
 
 # Known issues
