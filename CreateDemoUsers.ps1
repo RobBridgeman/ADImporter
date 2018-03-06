@@ -44,6 +44,7 @@ $phoneCountryCodes = @{"GB" = "+44"}         # Country codes for the countries u
 # Other parameters
 $userCount = 5000                           # How many users to create
 $locationCount = 1                          # How many different offices locations to use
+$employeeNumber = 1
 
 # Files used
 $firstNameFile = "Firstnames.txt"            # Format: FirstName
