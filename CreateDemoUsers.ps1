@@ -155,6 +155,8 @@ if ($i -lt $userCount)
       $i=$i-1
       if ($i -lt 0)
       {$i=0}
+      echo "$($sAMAccountName) exists"
+      $employeeNumber = $employeeNumber+1
       continue
    }
 
