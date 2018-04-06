@@ -1,3 +1,6 @@
+# Fork notes
+Fixed a bug that has been reported but not addressed and changed the script to suite my needs (usage on a much lesser scale).
+
 # Credits
 * Credit to Helge Klein for the original powershell script - https://helgeklein.com/blog/2015/02/creating-realistic-test-user-accounts-active-directory/
 * Credit to aakashkag for his Name list - https://github.com/aakashkag/People-Name-List
