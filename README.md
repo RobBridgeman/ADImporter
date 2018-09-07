@@ -1,5 +1,5 @@
 # Fork notes
-Fixed a bug that has been reported but not addressed and changed the script to suite my needs (usage on a much lesser scale). All credits to the scripts original creator.
+Fixed a bug that has been reported but not addressed and changed the script to suite my needs (usage on a much lesser scale). All credits to the script's original creator.
 
 # Credits
 * Credit to Helge Klein for the original powershell script - https://helgeklein.com/blog/2015/02/creating-realistic-test-user-accounts-active-directory/
