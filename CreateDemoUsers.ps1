@@ -113,8 +113,8 @@ if ($i -lt $userCount)
 {
     foreach ($lastname in $lastnames)
     {
-    $Fname = $firstname.Firstname
-    $Lname = $lastName.Lastname
+    $Fname = ForEach-Object {$firstnames.Firstname | Get-Random}
+    $Lname = ForEach-Object {$lastnames.Lastname | Get-Random}
 
     $displayName = $Fname + " " + $Lname
 
