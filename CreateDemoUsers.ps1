@@ -12,7 +12,7 @@
 
 
 Set-StrictMode -Version 2
-
+$DebugPreference = "SilentlyContinue" # SilentlyContinue | Continue
 Import-Module ActiveDirectory
 
 # Set the working directory to the script's directory
@@ -39,11 +39,11 @@ $departments = (                             # Departments and associated job ti
                   @{"Name" = "Contracts"; Positions = ("Manager", "Coordinator", "Clerk")},
                   @{"Name" = "Purchasing"; Positions = ("Manager", "Coordinator", "Clerk", "Purchaser")}
                )
-$phoneCountryCodes = @{"GB" = "+44"}         # Country codes for the countries used in the address file
+[System.Collections.ArrayList]$phoneCountryCodes = @{"NL" = "+31"; "GB" = "+44"; "DE" = "+49"}         # Country codes for the countries used in the address file
 
 # Other parameters
 $userCount = 5000                           # How many users to create
-$locationCount = 1                          # How many different offices locations to use
+$locationCount = 2                          # How many different offices locations to use counting from 0, where 0 is 1
 
 # Files used
 $firstNameFile = "Firstnames.txt"            # Format: FirstName
@@ -51,12 +51,15 @@ $lastNameFile = "Lastnames.txt"              # Format: LastName
 $addressFile = "Addresses.txt"               # Format: City,Street,State,PostalCode,Country
 $postalAreaFile = "PostalAreaCode.txt"       # Format: PostalCode,PhoneAreaCode
 
+# Check locationCount before importing Files else it chokes when it's set too high
+if ($locationCount -ge $phoneCountryCodes.Count) {Write-Error ("ERROR: selected locationCount is higher than configured phoneCountryCodes2. You may want to configure $($phoneCountryCodes.Count-1) as max locationCount");continue}
+
 #
 # Read input files
 #
-$firstNames = Import-CSV $firstNameFile
-$lastNames = Import-CSV $lastNameFile
-$addresses = Import-CSV $addressFile
+$firstNames = Import-CSV $firstNameFile -Encoding utf7 # This will remove some "illegal" characters from the names as those characters are not displayed properly (in WS2012R2)
+$lastNames = Import-CSV $lastNameFile -Encoding utf7 # This will remove some "illegal" characters from the names as those characters are not displayed properly (in WS2012R2)
+$addresses = Import-CSV $addressFile -Encoding utf7 # This will remove some "illegal" characters from the names as those characters are not displayed properly (in WS2012R2)
 $postalAreaCodesTemp = Import-CSV $postalAreaFile
 
 # Convert the postal & phone area code object list into a hash
@@ -104,6 +107,14 @@ for ($i = 0; $i -le $locationCount; $i++)
 #
 # Randomly determine this user's properties
 #
+
+# Create (and overwrite) new array lists [0]
+$CSV_Fname = New-Object System.Collections.ArrayList
+$CSV_Lname = New-Object System.Collections.ArrayList
+
+#Populate entire $firstNames and $lastNames into the array
+$CSV_Fname.Add($firstNames)
+$CSV_Lname.Add($lastNames)
    
 # Sex & name
 $i = 0
@@ -113,10 +124,11 @@ if ($i -lt $userCount)
 {
     foreach ($lastname in $lastnames)
     {
-    $Fname = ForEach-Object {$firstnames.Firstname | Get-Random}
-    $Lname = ForEach-Object {$lastnames.Lastname | Get-Random}
+   $Fname = ($CSV_Fname | Get-Random).FirstName
+   $Lname = ($CSV_Lname | Get-Random).LastName
 
-    $displayName = $Fname + " " + $Lname
+   #Capitalise first letter of each name
+   $displayName = (Get-Culture).TextInfo.ToTitleCase($Fname + " " + $Lname)
 
    # Address
    $locationIndex = Get-Random -Minimum 0 -Maximum $locations.Count
@@ -125,6 +137,7 @@ if ($i -lt $userCount)
    $state = $locations[$locationIndex].State
    $postalCode = $locations[$locationIndex].PostalCode
    $country = $locations[$locationIndex].Country
+   $matchcc = $phoneCountryCodes.GetEnumerator() | Where-Object {$_.Name -eq $country} # match the phone country code to the selected country above
    
    # Department & title
    $departmentIndex = Get-Random -Minimum 0 -Maximum $departments.Count
@@ -132,17 +145,17 @@ if ($i -lt $userCount)
    $title = $departments[$departmentIndex].Positions[$(Get-Random -Minimum 0 -Maximum $departments[$departmentIndex].Positions.Count)]
 
    # Phone number
-   if (-not $phoneCountryCodes.ContainsKey($country))
+   if ($matchcc.Name -notcontains $country)
    {
-      "ERROR: No country code found for $country"
+      Write-Debug ("ERROR1: No country code found for $country")
       continue
    }
    if (-not $postalAreaCodes.ContainsKey($postalCode))
    {
-      "ERROR: No country code found for $country"
+      Write-Debug ("ERROR2: No country code found for $country")
       continue
    }
-   $officePhone = $phoneCountryCodes[$country] + "-" + $postalAreaCodes[$postalCode].Substring(1) + "-" + (Get-Random -Minimum 100000 -Maximum 1000000)
+   $officePhone = $matchcc.Value + " " + $postalAreaCodes[$postalCode].Substring(1) + " " + (Get-Random -Minimum 100000 -Maximum 1000000)
    
    # Build the sAMAccountName: $orgShortName + employee number
    $employeeNumber = Get-Random -Minimum 100000 -Maximum 1000000
@@ -163,7 +176,7 @@ if ($i -lt $userCount)
    #
       New-ADUser -SamAccountName $sAMAccountName -Name $displayName -Path $ou -AccountPassword $securePassword -Enabled $true -GivenName $Fname -Surname $Lname -DisplayName $displayName -EmailAddress "$Fname.$Lname@$dnsDomain" -StreetAddress $street -City $city -PostalCode $postalCode -State $state -Country $country -UserPrincipalName "$sAMAccountName@$dnsDomain" -Company $company -Department $department -EmployeeNumber $employeeNumber -Title $title -OfficePhone $officePhone
 
-   "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $street, $city"
+   "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $officePhone, $country, $street, $city"
    $i = $i+1
    $employeeNumber = $employeeNumber+1
 
