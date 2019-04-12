@@ -5,3 +5,5 @@ OLD RAYNE,44 Horsefair Green,Eng,BA122QR,GB
 Aachen,Kapellenstr 15-19,Nordrhein-Westfalen,52078,GB
 Aachen,Steinkaulplatz 12,Nordrhein-Westfalen,52078,GB
 Aachen,Trierer Str 366,Nordrhein-Westfalen,52078,GB
+Amsterdam,Claude Debussylaan 34,Noord Holland,1082 MD,NL
+Berlin,Tucholskystraﬂe 2,Bradenburg,10117,DE
