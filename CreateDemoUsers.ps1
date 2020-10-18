@@ -38,7 +38,6 @@ $departments = (                             # Departments and associated job ti
                   @{"Name" = "Planning"; Positions = ("Manager", "Engineer")},
                   @{"Name" = "Contracts"; Positions = ("Manager", "Coordinator", "Clerk")},
                   @{"Name" = "Purchasing"; Positions = ("Manager", "Coordinator", "Clerk", "Purchaser")}
-               )
 [System.Collections.ArrayList]$phoneCountryCodes = @{"NL" = "+31"; "GB" = "+44"; "DE" = "+49"}         # Country codes for the countries used in the address file
 
 # Other parameters
@@ -86,7 +85,7 @@ for ($i = 0; $i -le $locationCount; $i++)
    {
       $addressIndex = Get-Random -Minimum 0 -Maximum $addresses.Count
    } while ($addressIndexesUsed -contains $addressIndex)
-   
+
    # Store the address in a location variable
    $street = $addresses[$addressIndex].Street
    $city = $addresses[$addressIndex].City
@@ -94,11 +93,30 @@ for ($i = 0; $i -le $locationCount; $i++)
    $postalCode = $addresses[$addressIndex].PostalCode
    $country = $addresses[$addressIndex].Country
    $locations += @{"Street" = $street; "City" = $city; "State" = $state; "PostalCode" = $postalCode; "Country" = $country}
-   
+
    # Do not use this address again
    $addressIndexesUsed += $addressIndex
 }
 
+# Create the OUs
+foreach($dep in $departments) 
+{
+   New-ADOrganizationalUnit -Name $dep.Name -Path $ou
+   "Created ou #" + ($i+1) + ", " + $dep.Name
+}
+
+# Create the Groups
+foreach($dep in $departments)
+{
+   $path = "OU=" + $dep.Name + "," + $ou
+   foreach($pos in $dep.Positions)
+   {
+      $groupname = $dep.Name + "_" + $pos
+      $description = $pos + " of Department " + $dep.Name
+      New-ADGroup -Path $path -Name $groupname -GroupScope Global -Description $description
+      "Created group " + $groupname
+   }
+}
 
 #
 # Create the users
@@ -120,71 +138,77 @@ $CSV_Lname.Add($lastNames)
 $i = 0
 if ($i -lt $userCount) 
 {
-    foreach ($firstname in $firstNames)
-{
-    foreach ($lastname in $lastnames)
-    {
-   $Fname = ($CSV_Fname | Get-Random).FirstName
-   $Lname = ($CSV_Lname | Get-Random).LastName
+   foreach ($firstname in $firstNames)
+   {
+       foreach ($lastname in $lastnames)
+       {
+          $Fname = ($CSV_Fname | Get-Random).FirstName
+          $Lname = ($CSV_Lname | Get-Random).LastName
 
-   #Capitalise first letter of each name
-   $displayName = (Get-Culture).TextInfo.ToTitleCase($Fname + " " + $Lname)
+          #Capitalise first letter of each name
+          $displayName = (Get-Culture).TextInfo.ToTitleCase($Fname + " " + $Lname)
 
-   # Address
-   $locationIndex = Get-Random -Minimum 0 -Maximum $locations.Count
-   $street = $locations[$locationIndex].Street
-   $city = $locations[$locationIndex].City
-   $state = $locations[$locationIndex].State
-   $postalCode = $locations[$locationIndex].PostalCode
-   $country = $locations[$locationIndex].Country
-   $matchcc = $phoneCountryCodes.GetEnumerator() | Where-Object {$_.Name -eq $country} # match the phone country code to the selected country above
+          # Address
+          $locationIndex = Get-Random -Minimum 0 -Maximum $locations.Count
+          $street = $locations[$locationIndex].Street
+          $city = $locations[$locationIndex].City
+          $state = $locations[$locationIndex].State
+          $postalCode = $locations[$locationIndex].PostalCode
+          $country = $locations[$locationIndex].Country
+          $matchcc = $phoneCountryCodes.GetEnumerator() | Where-Object {$_.Name -eq $country} # match the phone country code to the selected country above
+
+          # Department & title
+          $departmentIndex = Get-Random -Minimum 0 -Maximum $departments.Count
+          $department = $departments[$departmentIndex].Name
+          $title = $departments[$departmentIndex].Positions[$(Get-Random -Minimum 0 -Maximum $departments[$departmentIndex].Positions.Count)]
+
+          # Phone number
+          if ($matchcc.Name -notcontains $country)
+          {
+             Write-Debug ("ERROR1: No country code found for $country")
+             continue
+          }
+          if (-not $postalAreaCodes.ContainsKey($postalCode))
+          {
+             Write-Debug ("ERROR2: No country code found for $country")
+             continue
+          }
+          $officePhone = $matchcc.Value + " " + $postalAreaCodes[$postalCode].Substring(1) + " " + (Get-Random -Minimum 100000 -Maximum 1000000)
    
-   # Department & title
-   $departmentIndex = Get-Random -Minimum 0 -Maximum $departments.Count
-   $department = $departments[$departmentIndex].Name
-   $title = $departments[$departmentIndex].Positions[$(Get-Random -Minimum 0 -Maximum $departments[$departmentIndex].Positions.Count)]
+          # Build the sAMAccountName: $orgShortName + employee number
+          $employeeNumber = Get-Random -Minimum 100000 -Maximum 1000000
+          $sAMAccountName = $orgShortName + $employeeNumber
+          $userExists = $false
+          Try   { $userExists = Get-ADUser -LDAPFilter "(sAMAccountName=$sAMAccountName)" }
+          Catch { }
+          if ($userExists)
+          {
+             $i=$i-1
+             if ($i -lt 0)
+             {$i=0}
+             continue
+          }
 
-   # Phone number
-   if ($matchcc.Name -notcontains $country)
-   {
-      Write-Debug ("ERROR1: No country code found for $country")
-      continue
-   }
-   if (-not $postalAreaCodes.ContainsKey($postalCode))
-   {
-      Write-Debug ("ERROR2: No country code found for $country")
-      continue
-   }
-   $officePhone = $matchcc.Value + " " + $postalAreaCodes[$postalCode].Substring(1) + " " + (Get-Random -Minimum 100000 -Maximum 1000000)
-   
-   # Build the sAMAccountName: $orgShortName + employee number
-   $employeeNumber = Get-Random -Minimum 100000 -Maximum 1000000
-   $sAMAccountName = $orgShortName + $employeeNumber
-   $userExists = $false
-   Try   { $userExists = Get-ADUser -LDAPFilter "(sAMAccountName=$sAMAccountName)" }
-   Catch { }
-   if ($userExists)
-   {
-      $i=$i-1
-      if ($i -lt 0)
-      {$i=0}
-      continue
-   }
+          #
+          # Create the user account
+          #
+          $path = "OU=" + $department + "," + $ou
+          New-ADUser -SamAccountName $sAMAccountName -Name $displayName -Path $path -AccountPassword $securePassword -Enabled $true -GivenName $Fname -Surname $Lname -DisplayName $displayName -EmailAddress "$Fname.$Lname@$dnsDomain" -StreetAddress $street -City $city -PostalCode $postalCode -State $state -Country $country -UserPrincipalName "$sAMAccountName@$dnsDomain" -Company $company -Department $department -EmployeeNumber $employeeNumber -Title $title -OfficePhone $officePhone
+          #
+          # Assign user account to group
+          #
+          $groupname = $department + "_" + $title
+          Add-ADGroupMember -Identity $groupname -Members $sAMAccountName
 
-   #
-   # Create the user account
-   #
-      New-ADUser -SamAccountName $sAMAccountName -Name $displayName -Path $ou -AccountPassword $securePassword -Enabled $true -GivenName $Fname -Surname $Lname -DisplayName $displayName -EmailAddress "$Fname.$Lname@$dnsDomain" -StreetAddress $street -City $city -PostalCode $postalCode -State $state -Country $country -UserPrincipalName "$sAMAccountName@$dnsDomain" -Company $company -Department $department -EmployeeNumber $employeeNumber -Title $title -OfficePhone $officePhone
+          "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $officePhone, $country, $street, $city"
+          $i = $i+1
+          $employeeNumber = $employeeNumber+1
 
-   "Created user #" + ($i+1) + ", $displayName, $sAMAccountName, $title, $department, $officePhone, $country, $street, $city"
-   $i = $i+1
-   $employeeNumber = $employeeNumber+1
-
-      if ($i -ge $userCount) 
-   {
-       "Script Complete. Exiting"
-       exit
+          if ($i -ge $userCount) 
+          {
+             "Script Complete. Exiting"
+             exit
+          }
+       }
    }
-}
-}
 }
